@@ -1,0 +1,9 @@
+set timeout -1
+spawn scp [lindex $argv 2] root@[lindex $argv 0]:[lindex $argv 3]
+expect {
+        "(yes/no)?"
+        {send "yes\n";exp_continue}
+        "password:"
+         {send "[lindex $argv 1]\n"}
+}
+expect eof

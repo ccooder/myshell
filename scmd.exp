@@ -1,0 +1,9 @@
+set timeout 30
+spawn ssh root@[lindex $argv 0] "mkdir -p /tmp[lindex $argv 3]; mv [lindex $argv 2] /tmp[lindex $argv 3]"
+expect {
+        "(yes/no)?"
+        {send "yes\n";exp_continue}
+        "password:"
+         {send "[lindex $argv 1]\n"}
+}
+expect eof
