@@ -3,6 +3,7 @@
 # backup
 
 os=`uname -s`
+BIN_PATH=`dirname $0`
 
 if [ $os == "Darwin" ];then
     bak_root="写你要备份的主目录"
@@ -30,6 +31,18 @@ log() {
     echo "`date "+%Y-%m-%d %H:%M:%S,%N" | cut -b 1-23` [$LOG_LEVEL]:$2"
 }
 
+log info "开始前置条件检查"
+scmd_file_count=`ls -al ${BIN_PATH}| grep scmd.exp | wc -l`
+if [ $scmd_file_count == 0 ];then
+    log error "请将scmd.exp文件放置于跟[$0]脚本同一目录下"
+    exit 1
+fi
+scp_file_count=`ls -al ${BIN_PATH}| grep scp.exp | wc -l`
+if [ $scp_file_count == 0  ];then
+    log error "请将scp.exp文件放置于跟[$0]脚本同一目录下"
+    exit 1
+fi
+log info "前置条件检查完毕，一切正常"
 log info "开始备份"
 mkdir -p $bak_path_mysql
 log error "第一步：导出mysql数据库"
@@ -39,7 +52,7 @@ mkdir -p /tmp$bak_path_mysql
 mv ${bak_path_mysql}/${bak_filename_prefix}* /tmp$bak_path_mysql
 for ((i=0; i<${#bak_servers_host[@]}; i++))
 do
-    expect scmd.exp ${bak_servers_host[i]} ${bak_servers_pass[i]} ${bak_path_mysql}/${bak_filename_prefix}* ${bak_path_mysql}
+    expect ${BIN_PATH}/scmd.exp ${bak_servers_host[i]} ${bak_servers_pass[i]} ${bak_path_mysql}/${bak_filename_prefix}* ${bak_path_mysql}
 done
 log info "备份位置$bak_filename_mysql"
 starttime=`date +%s%N`
@@ -54,7 +67,7 @@ for ((i=0; i<${#bak_servers_host[@]}; i++))
 do
     log info "服务器${i+1}[${bak_servers_host[i]}]拷贝开始"
     starttime=`date +%s%N`
-    expect scp.exp ${bak_servers_host[i]} ${bak_servers_pass[i]} $bak_filename_mysql $bak_path_mysql
+    expect ${BIN_PATH}/scp.exp ${bak_servers_host[i]} ${bak_servers_pass[i]} $bak_filename_mysql $bak_path_mysql
     endtime=`date +%s%N`
     interval=`awk "BEGIN{printf \"%.3f\n\",($endtime-$starttime)/1000000000}"`
     log info "服务器${i+1}[${bak_servers_host[i]}]拷贝完成耗时${interval}s"
